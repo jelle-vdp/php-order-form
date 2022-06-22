@@ -64,8 +64,6 @@ $_POST["not_an_email"] = false;
 
 function validate(){
 
-    echo "valideren";
-
     global $valid;
     global $fields;
 
@@ -121,11 +119,36 @@ if (isset($_POST["place-order"])){
         $orderedProductsArr = [];
         $orderedProducts = "";
         $currentOrderCost = 0;
+        
+        if (!isset($_SESSION["pastOrders_" . str_replace(array(".", "@"), "", $_POST["email"])])){            
+            $_SESSION["pastOrders_" . str_replace(array(".", "@"), "", $_POST["email"])] = [
+                ['name' => 'Short shorts', 'amount' => 0],
+                ['name' => 'Cigarettes', 'amount' => 0],
+                ['name' => 'Wiener dog', 'amount' => 0],
+                ['name' => 'Getting high in the morning', 'amount' => 0],
+                ['name' => 'Buying things off the internet', 'amount' => 0],
+                ['name' => 'Sports', 'amount' => 0],
+                ['name' => 'The Color of Pomegranates', 'amount' => 0],
+                ['name' => 'Dogtooth', 'amount' => 0],
+                ['name' => 'The Killing of a Sacred Deer', 'amount' => 0],
+                ['name' => 'Wrong Cops', 'amount' => 0],
+                ['name' => 'D\'Ardennen', 'amount' => 0],
+                ['name' => 'Rundskop', 'amount' => 0]
+            ];
+        }
 
         for($i = 0; $i < 6; $i++){
             $orderedProductsArr[$i]["amount"] = $_POST["product-" . $i];
             $orderedProductsArr[$i]["item"] = $products[$i]["name"];
             $orderedProductsArr[$i]["price"] = $products[$i]["price"];
+
+            if (@$_GET["page"] == 1 || !isset($_GET["page"])){
+                $placeInArr = $i;
+            } else {
+                $placeInArr = $i + 6;
+            }
+
+            $_SESSION["pastOrders_" . str_replace(array(".", "@"), "", $_POST["email"])][$placeInArr]["amount"] += intval($_POST["product-" . $i]);
         };
 
         $secondOrderedProductsArr = [];
@@ -139,6 +162,19 @@ if (isset($_POST["place-order"])){
             };
         };
 
+        $mostPopularProduct = ['name' => 'Default', 'amount' => -1];
+        
+
+        foreach($_SESSION["pastOrders_" . str_replace(array(".", "@"), "", $_POST["email"])] as $pastOrder){
+            if ($pastOrder['amount'] > $mostPopularProduct['amount']){
+                $mostPopularProduct = $pastOrder;
+            }
+            // NOT PERFECT, if amounts are the same then only one product gets displayed instead of all of them
+        }
+
+        $mostPopularProductName = $mostPopularProduct["name"];
+        $mostPopularProductAmount = $mostPopularProduct["amount"];
+
         if (count($secondOrderedProductsArr) > 1){
             $orderedProducts = implode(", ", $secondOrderedProductsArr);
             $orderedProducts = substr_replace($orderedProducts, ' and', strrpos($orderedProducts, ','), 1);
@@ -147,7 +183,16 @@ if (isset($_POST["place-order"])){
         };
 
         $orderAdress = $_POST["street"] . " " . $_POST["streetnumber"] . ", " . $_POST["zipcode"] . " " . $_POST["city"];
+
+        if (!isset($_POST["fast-delivery"])){
+            $deliveryTime = "2h";
+            $deliveryTimestamp = date("F j, Y, g:i a", time() + 2*60*60);
+        } else {
+            $deliveryTime = "45min";
+            $deliveryTimestamp = date("F j, Y, g:i a", time() + 45*60);
+        }
     }
 }
+
 
 require 'form-view.php';
