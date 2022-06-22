@@ -19,7 +19,7 @@ function whatIsHappening() {
     var_dump($_COOKIE);
     echo '<h2>$_SESSION</h2>';
     var_dump($_SESSION);
-}
+};
 
 // TODO: provide some products (you may overwrite the example)
 
@@ -34,7 +34,7 @@ if (@$_GET["page"] == 1 || !isset($_GET["page"])){
     ];
 } else {
     $products = [
-        ['name' => 'The Color of Pomegranades', 'price' => 18],
+        ['name' => 'The Color of Pomegranates', 'price' => 18],
         ['name' => 'Dogtooth', 'price' => 20],
         ['name' => 'The Killing of a Sacred Deer', 'price' => 9],
         ['name' => 'Wrong Cops', 'price' => 25],
@@ -43,10 +43,8 @@ if (@$_GET["page"] == 1 || !isset($_GET["page"])){
     ];
 }
 
-
-
 $formSubmitted = false;
-$fields = ["email", "street", "streetnumber", "city", "zipcode", "product"];
+$fields = ["email", "street", "streetnumber", "city", "zipcode"];
 $valid = true;
 
 if(!empty($_SESSION["totalValue"])){
@@ -56,63 +54,51 @@ if(!empty($_SESSION["totalValue"])){
 };
 
 foreach ($fields as $field){
-        $_SESSION["empty_" . $field] = false;
+        $_POST["empty_" . $field] = false;
         unset($field);
 };
 
-$_SESSION["zipcode_not_numberic"] = false;
-$_SESSION["not_an_email"] = false;
+$_POST["empty_product"] = false;
+$_POST["zipcode_not_numberic"] = false;
+$_POST["not_an_email"] = false;
 
 function validate(){
 
+    echo "valideren";
+
     global $valid;
+    global $fields;
 
-    $textFields = ["email", "street", "streetnumber", "city", "zipcode"];
-
-    foreach ($textFields as $field){
+    foreach ($fields as $field){
         if (empty($_POST[$field])){
-            $_SESSION["empty_" . $field] = true;
+            $_POST["empty_" . $field] = true;
             $valid = false;
         };
     };
 
-    if(empty($_POST['product'])){
-        $_SESSION["empty_product"] = true;
+    $productArr = [];
+
+    for($i = 0; $i < 6; $i++){
+       if ($_POST["product-$i"] != 0){
+            array_push($productArr, true);
+       }
+    }
+
+    if (empty($productArr)){
+        $_POST["empty_product"] = true;
         $valid = false;
-    };
+    }
 
     if (!is_numeric($_POST['zipcode'])){
-        $_SESSION["zipcode_not_numberic"] = true;
+        $_POST["zipcode_not_numberic"] = true;
         $valid = false;
     };
 
     if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)){
-        $_SESSION["not_an_email"] = true;
+        $_POST["not_an_email"] = true;
         $valid = false;
     };
 };
-
-
-// function handleForm()
-// {
-//     // TODO: form related tasks (step 1)
-
-//     // Validation (step 2)
-//     $invalidFields = validate();
-//     if (!empty($invalidFields)) {
-//         // TODO: handle errors
-//     } else {
-//         // TODO: handle successful submission
-//     }
-// }
-
-
-
-// // TODO: replace this if by an actual check
-// 
-// if ($formSubmitted) {
-//     handleForm();
-// }
 
 
 if (isset($_POST["place-order"])){
@@ -121,37 +107,47 @@ if (isset($_POST["place-order"])){
 
     global $valid;
 
+    $fieldPersonalDetails = ["email", "street", "streetnumber", "city", "zipcode"];
+
+    foreach($fieldPersonalDetails as $detail){
+        if(($_POST[$detail])){
+             $_SESSION[$detail] = $_POST[$detail];
+        }
+    };
+
     if ($valid) {
 
         $formSubmitted = true;
         $orderedProductsArr = [];
         $orderedProducts = "";
         $currentOrderCost = 0;
-        if(!empty($_POST['product'])){
-            foreach ($_POST["product"] as $product){
-                array_push($orderedProductsArr, $products[$product]["name"]);
-                $totalValue += $products[$product]["price"];
-                $_SESSION["totalValue"] = $totalValue;
-                $currentOrderCost += $products[$product]["price"];
-            }
+
+        for($i = 0; $i < 6; $i++){
+            $orderedProductsArr[$i]["amount"] = $_POST["product-" . $i];
+            $orderedProductsArr[$i]["item"] = $products[$i]["name"];
+            $orderedProductsArr[$i]["price"] = $products[$i]["price"];
         };
-        if (count($orderedProductsArr) > 1){
-            $orderedProducts = implode(", ", $orderedProductsArr);
+
+        $secondOrderedProductsArr = [];
+
+        foreach ($orderedProductsArr as $order){
+            if ($order["amount"] != 0){
+                array_push($secondOrderedProductsArr, $order["item"] . " (" . $order["amount"] . "x)");
+                $currentOrderCost += $order["price"] * $order["amount"];
+                $totalValue += $currentOrderCost;
+                $_SESSION["totalValue"] = $totalValue;
+            };
+        };
+
+        if (count($secondOrderedProductsArr) > 1){
+            $orderedProducts = implode(", ", $secondOrderedProductsArr);
             $orderedProducts = substr_replace($orderedProducts, ' and', strrpos($orderedProducts, ','), 1);
-        } else if (count($orderedProductsArr) === 1){
-            $orderedProducts = $orderedProductsArr[0];
+        } else {
+            $orderedProducts = $secondOrderedProductsArr[0];
         };
 
         $orderAdress = $_POST["street"] . " " . $_POST["streetnumber"] . ", " . $_POST["zipcode"] . " " . $_POST["city"];
     }
-    
-    
 }
 
 require 'form-view.php';
-
-// if (@$_GET["page"] == 1 || !isset($_GET["page"])){
-//     require 'form-view.php';
-// } else {
-//     require "second-page.php";
-// }
