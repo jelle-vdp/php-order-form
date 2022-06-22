@@ -162,7 +162,7 @@
                 if($formSubmitted){
                     echo "<p class='mt-2'>You've ordered $orderedProducts for &euro;$currentOrderCost.</p>";
                     echo "<p class='mt-2'>Your order will be sent to $orderAdress</p>";
-                    echo "<p class='mt-2'>It will be delivered in $deliveryTime, so you can expected it at $deliveryTimestamp</p>";
+                    echo "<p class='mt-2'>It will be delivered in $deliveryTime, so you can expect it at $deliveryTimestamp</p>";
                     echo "<p class='mt-2'>Your most popular product seems to be $mostPopularProductName, you have already ordered it $mostPopularProductAmount times.</p>";
                 }
             ?>
